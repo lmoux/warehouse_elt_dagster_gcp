@@ -11,8 +11,6 @@ import src.dw01.pjm
 from src.dw01.pjm import PjmFtrScheduleFile, PjmFtrModelUpdateFile, PjmFileKind
 from src.dw01.utils import download_file_locally
 
-# sys.path.append("../../../")
-
 # For whatever reason the .env file wasn't being picked up... Maybe a dg vs dagster or tooling issue
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
     "/Users/luis/repos/sandbox/gcp_luis_srv_elect_dw01.json"
@@ -28,7 +26,7 @@ gcs_bucket_id = "dw01_bucket"
     config_schema={"ftr_url": str},
 )
 def file_uploader_to_gcp(
-    context: dg.AssetExecutionContext, gcs: GCSResource
+        context: dg.AssetExecutionContext, gcs: GCSResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -61,10 +59,6 @@ def file_uploader_to_gcp(
         if next_file is None:
             continue
         blob = bucket.blob(next_file.nice_filename)
-
-        # if blob.exists():
-        #     # this seems inefficient; too many round trips, perhaps try to query for the X most recent files
-        #     continue
 
         log.info(f"Downloading file {next_file.nice_filename}")
 
@@ -132,10 +126,10 @@ pjm_table_schemas = {
 @dg.asset(
     description="GCP file processor",
     group_name="transformation",
-    # deps=[file_uploader_to_gcp], # comment out to debug faster
+    deps=[file_uploader_to_gcp],  # comment out to debug faster
 )
 def gcp_file_processor(
-    context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
+        context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -152,10 +146,6 @@ def gcp_file_processor(
 
     with bigquery.get_client() as bg_client:
         # First create tables as necessary
-
-        # tables = bg_client.list_tables(big_query_dataset_id)
-        # for table in tables:
-        #     print("{}.{}.{}".format(table.project, table.dataset_id, table.table_id))
 
         log.info(
             f"Connecting & retrieving tables in BigQuery: bq://{big_query_dataset_id}"
@@ -190,11 +180,6 @@ def gcp_file_processor(
                 continue
 
             blob = bucket.blob(blob_name)
-            # attempt1 []: download bytes... but in parsers I got info from filename
-            #   data = blob.download_as_bytes()
-            #   df = pd.read_csv(io.StringIO(data))
-            # attempt2: maybe use gcsfs
-
             local_blob_name = os.path.join("downloads/", blob_name)
             new_name = os.path.basename(blob_name.split(".")[0] + ".csv")
             cleaned_file = bucket.blob("cleaned/" + new_name)
@@ -211,8 +196,6 @@ def gcp_file_processor(
                 kind = PjmFileKind.FtrSchedule
                 log.info(f"Attempt at parsing PjmFtrScheduleFile: {blob_name}")
                 parsed_result = PjmFtrScheduleFile(local_blob_name)
-                # merge into the auction_schedule table
-
                 cleaned_file.upload_from_string(
                     pd.DataFrame(parsed_result.auction_data_frame).to_csv(index=False),
                     "text/csv",
@@ -221,7 +204,7 @@ def gcp_file_processor(
                 processed_files.append(blob_name)
                 should_merge_auction_calendars = True
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
-                ".csv"
+                    ".csv"
             ):
                 kind = PjmFileKind.FtrSchedule
                 cleaned_file = bucket.blob("cleaned/" + blob_name)
