@@ -117,11 +117,17 @@ class PjmFtrScheduleFile:
         self.auctions = PjmFtrScheduleFile.parse_auctions(filename)
 
     @staticmethod
-    def parse_auctions(filename: str):
+    def parse_auctions(filename: str, data=None):
         """Parses a PJM FTR Schedule file"""
-        if filename is None or not os.path.exists(filename):
+        if data is None and filename is None:
             return None
-        df = pd.read_excel(filename)
+        df = None
+        if data is None:
+            if filename is None or not os.path.exists(filename):
+                return None
+            df = pd.read_excel(filename)
+        else:
+            df = pd.read_csv(data)
         version = int(os.path.basename(filename).split("-")[0])
 
         # using rename to showcase it, but probably best to use read_excel(name=array) later
@@ -193,7 +199,8 @@ class PjmFtrModelUpdateFile:
         self.filename = filename
         with open(filename, "r") as f:
             first_line = f.readline()
-            assert "FTRs Affected by LMP Bus Model" in first_line
+            # some have full "FTRs Affected by LMP Bus Model" others just start with FTRs Affected by
+            assert "FTRs Affected by" in first_line
             prospect_date = first_line.split("-")[-1].split('"')[0].strip()
             self.version = datetime.strptime(prospect_date, "%B %d, %Y").date()
             f.readline()
