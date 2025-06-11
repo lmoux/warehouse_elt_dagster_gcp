@@ -200,7 +200,8 @@ class PjmFtrModelUpdateFile:
         with open(filename, "r") as f:
             first_line = f.readline()
             # some have full "FTRs Affected by LMP Bus Model" others just start with FTRs Affected by
-            assert "FTRs Affected by" in first_line
+            # assert re.match("^FTRs Affected by.*", first_line, re.IGNORECASE) is not None
+            assert "FTRs Affected by".upper() in first_line.upper()
             prospect_date = first_line.split("-")[-1].split('"')[0].strip()
             self.version = datetime.strptime(prospect_date, "%B %d, %Y").date()
             f.readline()
