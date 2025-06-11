@@ -1,4 +1,3 @@
-import io
 import os
 
 import dagster as dg
@@ -28,8 +27,10 @@ big_query_dataset_id = "electricity-dw01.pjm_dataset"
     config_schema={"ftr_url": str},
 )
 def file_uploader_to_gcp(
-    context: dg.AssetExecutionContext, gcs: GCSResource
+        context: dg.AssetExecutionContext, gcs: GCSResource
 ) -> dg.MaterializeResult:
+    log = context.log
+
     # Apparently this client doesn't need a `with` (IDisposable `using`)
     gcs_client = gcs.get_client()
 
@@ -45,6 +46,8 @@ def file_uploader_to_gcp(
         if blob.exists():
             # this seems inefficient; too many round trips, perhaps try to query for the X most recent files
             continue
+
+        log.info(f"Downloading file {next_file.nice_filename}")
 
         local_file = download_file_locally(
             next_file.url,
@@ -112,7 +115,7 @@ pjm_table_schemas = {
     # deps=[file_uploader_to_gcp], # comment out to debug faster
 )
 def gcp_file_processor(
-    context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
+        context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -161,25 +164,32 @@ def gcp_file_processor(
             #   df = pd.read_csv(io.StringIO(data))
             # attempt2: maybe use gcsfs
 
-            cleaned_file = bucket.blob("cleaned/" + blob_name)
-            if cleaned_file.exists():
-                continue
-
             if "ftr-arr-market-schedule" in blob_name:
                 log.info(f"Downloading PjmFtrScheduleFile: {blob_name}")
-                data = io.BytesIO(blob.download_as_bytes())
+                # data = io.BytesIO(blob.download_as_bytes())
+                blob.download_to_filename(blob_name)
                 log.info(f"Attempt at parsing PjmFtrScheduleFile: {blob_name}")
-                parsed_result = PjmFtrScheduleFile.parse_auctions(blob_name, data)
+                parsed_result = PjmFtrScheduleFile(blob_name)
                 # merge into the auction_schedule table
+                new_name = blob_name.split(".")[0] + ".csv"
+
+                cleaned_file = bucket.blob("cleaned/" + new_name)
+                if cleaned_file.exists():
+                    continue
+
                 cleaned_file.upload_from_string(
-                    parsed_result.auctions.to_csv(), "text/csv"
+                    pd.DataFrame(parsed_result.auction_data_frame).to_csv(index=False), "text/csv"
                 )
                 print(f"Merge new PjmFtrScheduleFile: {blob_name}")
                 processed_files.append(blob_name)
                 should_merge_auction_calendars = True
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
-                ".csv"
+                    ".csv"
             ):
+                cleaned_file = bucket.blob("cleaned/" + blob_name)
+                if cleaned_file.exists():
+                    continue
+
                 log.info(f"Downloading PjmFtrModelUpdateFile: {blob_name}")
                 blob.download_to_filename(blob_name)
                 log.info(f"Attempt at parsing PjmFtrModelUpdateFile: {blob_name}")
