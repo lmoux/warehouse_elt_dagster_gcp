@@ -37,7 +37,7 @@ class PjmFtrScheduleProspect(PjmFileProspect):
 
     @staticmethod
     def extract_from_url(
-            link, base_url="https://www.pjm.com/markets-and-operations/ftr"
+        link, base_url="https://www.pjm.com/markets-and-operations/ftr"
     ):
         """Attempts an extraction of an PJM FTR Schedule from a URL pointing an Excel file"""
         if link is None:
@@ -61,7 +61,7 @@ class PjmFtrBusModelUpdateProspect(PjmFileProspect):
     # TODO: LMD, 2025-06-10> This can almost certainly be refactored along with the Schedule extractor...
     @staticmethod
     def extract_from_url(
-            link, base_url="https://www.pjm.com/markets-and-operations/ftr"
+        link, base_url="https://www.pjm.com/markets-and-operations/ftr"
     ):
         """Attempts an extraction of an PJM FTR Bus Model change from a URL pointing an Excel file"""
         if link is None:
@@ -82,17 +82,17 @@ class PjmFtrAuction(object):
     """Represents a PJM FTR Schedule"""
 
     def __init__(
-            self,
-            version: str,
-            market_name: str,
-            product: str,
-            period: str,
-            auction_round: int,
-            bidding_opening: datetime,
-            bidding_closing: datetime,
-            results_posted: datetime,
-            contract_start: date,
-            contract_end: date,
+        self,
+        version: str,
+        market_name: str,
+        product: str,
+        period: str,
+        auction_round: int,
+        bidding_opening: datetime,
+        bidding_closing: datetime,
+        results_posted: datetime,
+        contract_start: date,
+        contract_end: date,
     ):
         self.version = version
         self.market_name = market_name
@@ -114,7 +114,9 @@ class PjmFtrScheduleFile:
 
     def __init__(self, filename: str):
         self.filename = filename
-        self.auctions, self.auction_data_frame = PjmFtrScheduleFile.parse_auctions(filename)
+        self.auctions, self.auction_data_frame = PjmFtrScheduleFile.parse_auctions(
+            filename
+        )
 
     @staticmethod
     def parse_auctions(filename: str, data=None):
@@ -156,7 +158,9 @@ class PjmFtrScheduleFile:
         df.insert(0, "version", version)
 
         # Positional rather than **kwargs because I wanted to use more meaningful names
-        return [PjmFtrAuction(*args.values()) for args in df.to_dict(orient="records")], df
+        return [
+            PjmFtrAuction(*args.values()) for args in df.to_dict(orient="records")
+        ], df
 
 
 class PjmNodeNameChange(object):
@@ -164,19 +168,19 @@ class PjmNodeNameChange(object):
     which implies a node name (or ID, or characteristic) change"""
 
     def __init__(
-            self,
-            from_id,
-            from_txt_zone,
-            from_substation,
-            from_voltage,
-            from_equipment,
-            from_name,
-            to_id,
-            to_txt_zone,
-            to_substation,
-            to_voltage,
-            to_equipment,
-            to_name,
+        self,
+        from_id,
+        from_txt_zone,
+        from_substation,
+        from_voltage,
+        from_equipment,
+        from_name,
+        to_id,
+        to_txt_zone,
+        to_substation,
+        to_voltage,
+        to_equipment,
+        to_name,
     ):
         self.from_id = from_id
         self.from_txt_zone = from_txt_zone
@@ -207,10 +211,10 @@ class PjmFtrModelUpdateFile:
             f.readline()
             third_line = f.readline()
             assert (
-                    re.match(
-                        "^((Bus?ses)|(Aggregates)) Changed.*", third_line, re.IGNORECASE
-                    )
-                    is not None
+                re.match(
+                    "^((Bus?ses)|(Aggregates)) Changed.*", third_line, re.IGNORECASE
+                )
+                is not None
             )
             # we need to even account for typos...
         df = pd.read_csv(
@@ -252,8 +256,8 @@ def url_matches_csv_model_change(link):
 
 
 def get_urls_all_model_update_files(
-        content: str | bytes | TextIOWrapper | None,
-        base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
+    content: str | bytes | TextIOWrapper | None,
+    base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
 ):
     """Retrieves all PJM FTR model nodal name changes links from an HTML
      payload. Assumes the address is constant within PJM.
@@ -270,8 +274,8 @@ def get_urls_all_model_update_files(
 
 
 def get_urls_all_schedule_files(
-        content: str | bytes | TextIOWrapper | None,
-        base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
+    content: str | bytes | TextIOWrapper | None,
+    base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
 ) -> list:
     """Retrieves all PJM FTR model nodal name changes links from an HTML
      payload. Assumes the address is constant within PJM.
@@ -290,7 +294,7 @@ def get_urls_all_schedule_files(
 
 
 def get_urls_all_ftr(
-        base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
+    base_url: str = "https://www.pjm.com/markets-and-operations/ftr",
 ) -> list[PjmFileProspect]:
     base_pjm_ftr_html = utils.download_file_locally(
         base_url, "./downloads/.", overwrite=True

@@ -27,7 +27,7 @@ big_query_dataset_id = "electricity-dw01.pjm_dataset"
     config_schema={"ftr_url": str},
 )
 def file_uploader_to_gcp(
-        context: dg.AssetExecutionContext, gcs: GCSResource
+    context: dg.AssetExecutionContext, gcs: GCSResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -115,7 +115,7 @@ pjm_table_schemas = {
     # deps=[file_uploader_to_gcp], # comment out to debug faster
 )
 def gcp_file_processor(
-        context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
+    context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -178,13 +178,14 @@ def gcp_file_processor(
                     continue
 
                 cleaned_file.upload_from_string(
-                    pd.DataFrame(parsed_result.auction_data_frame).to_csv(index=False), "text/csv"
+                    pd.DataFrame(parsed_result.auction_data_frame).to_csv(index=False),
+                    "text/csv",
                 )
                 print(f"Merge new PjmFtrScheduleFile: {blob_name}")
                 processed_files.append(blob_name)
                 should_merge_auction_calendars = True
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
-                    ".csv"
+                ".csv"
             ):
                 cleaned_file = bucket.blob("cleaned/" + blob_name)
                 if cleaned_file.exists():
