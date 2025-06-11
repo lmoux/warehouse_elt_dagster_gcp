@@ -1,0 +1,12 @@
+"FTRs Affected by Ohio Valley Electric Cooperative (OVEC) Integration - December 1, 2018",,,,,,,,,,,
+,,,,,,,,,,,
+Buses Changed,,,,,,,,,,,
+Changed From:,,,,,,Changed To:,,,,,
+Pnode ID,Tx Zone,Substation,Voltage,Equipment,Pnode Name,Pnode ID,Tx Zone,Substation,Voltage,Equipment,Pnode Name
+1338431134,AEP,CLFTYAEP,345 KV,UN1,CLFTYAEP345 KV  UN1,1552845534,OVEC,CLIFTYCR,15.5 KV,CC1,CLIFTYCR15.5 KV CC1
+1338431128,AEP,KYGERAEP,345 KV,UN1,KYGERAEP345 KV  UN1,1552845545,OVEC,KYGERCRE,15.5 KV,KY1,KYGERCRE15.5 KV KY1
+,,,,,,,,,,,
+Aggregates Changed,,,,,,,,,,,
+Changed From:,,,,,,Changed To:,,,,,
+Pnode ID,Name,,,,,Pnode ID,Name,,,,
+34509945,OVEC,,,,,21839454,OVEC (PRE-PJM),,,,
