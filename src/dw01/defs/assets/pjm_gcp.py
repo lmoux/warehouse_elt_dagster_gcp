@@ -95,13 +95,13 @@ pjm_table_schemas = {
         bigqueryLib.SchemaField("from_substation", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("from_voltage", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("from_equipment", "STRING", mode="NULLABLE"),
-        bigqueryLib.SchemaField("from_name", "STRING", mode="REQUIRED"),
+        bigqueryLib.SchemaField("from_name", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("to_id", "INTEGER", mode="REQUIRED"),
         bigqueryLib.SchemaField("to_txt_zone", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("to_substation", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("to_voltage", "STRING", mode="NULLABLE"),
         bigqueryLib.SchemaField("to_equipment", "STRING", mode="NULLABLE"),
-        bigqueryLib.SchemaField("to_name", "STRING", mode="REQUIRED"),
+        bigqueryLib.SchemaField("to_name", "STRING", mode="NULLABLE"),
     ],
 }
 
@@ -148,31 +148,64 @@ def gcp_file_processor(
             )
             bg_client.create_table(table=big_table)
 
+        should_merge_model_changes = False
+        should_merge_auction_calendars = False
+
         for blob_name in blobs:
+            if "cleaned/" in blob_name:
+                continue
+
             blob = bucket.blob(blob_name)
             # attempt1 []: download bytes... but in parsers I got info from filename
             #   data = blob.download_as_bytes()
             #   df = pd.read_csv(io.StringIO(data))
             # attempt2: maybe use gcsfs
 
+            cleaned_file = bucket.blob("cleaned/" + blob_name)
+            if cleaned_file.exists():
+                continue
+
             if "ftr-arr-market-schedule" in blob_name:
                 log.info(f"Downloading PjmFtrScheduleFile: {blob_name}")
                 data = io.BytesIO(blob.download_as_bytes())
                 log.info(f"Attempt at parsing PjmFtrScheduleFile: {blob_name}")
-                PjmFtrScheduleFile.parse_auctions(blob_name, data)
+                parsed_result = PjmFtrScheduleFile.parse_auctions(blob_name, data)
                 # merge into the auction_schedule table
-                bg_client.query("select 1")
+                cleaned_file.upload_from_string(
+                    parsed_result.auctions.to_csv(), "text/csv"
+                )
                 print(f"Merge new PjmFtrScheduleFile: {blob_name}")
                 processed_files.append(blob_name)
+                should_merge_auction_calendars = True
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
                 ".csv"
             ):
                 log.info(f"Downloading PjmFtrModelUpdateFile: {blob_name}")
                 blob.download_to_filename(blob_name)
                 log.info(f"Attempt at parsing PjmFtrModelUpdateFile: {blob_name}")
-                PjmFtrModelUpdateFile(blob_name)
+                parsed_result = PjmFtrModelUpdateFile(blob_name)
+                cleaned_file.upload_from_string(
+                    parsed_result.changes.to_csv(index=False), "text/csv"
+                )
                 print(f"Merge new PjmFtrModelUpdateFile: {blob_name}")
                 processed_files.append(blob_name)
+                should_merge_model_changes = True
+
+        if should_merge_model_changes:
+            bg_client.query("""
+                merge `pjm_dataset.ftr_model_node_changes` as t
+                using pjm_dataset.ftr_model_node_changes_from_files as s
+                on t.version = s.version and t.from_id = s.from_id
+                when not matched by target then
+                  insert (
+                      version,
+                      from_id,from_txt_zone,from_substation,from_voltage,from_equipment,from_name,
+                      to_id,to_txt_zone,to_substation,to_voltage, to_equipment, to_name)
+                  values (
+                      version,
+                      from_id,from_txt_zone,from_substation,from_voltage,from_equipment,from_name,
+                      to_id,to_txt_zone,to_substation,to_voltage, to_equipment, to_name);
+            """)
 
     return dg.MaterializeResult(
         metadata={
