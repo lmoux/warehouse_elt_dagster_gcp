@@ -28,7 +28,7 @@ big_query_dataset_id = "electricity-dw01.pjm_dataset"
     config_schema={"ftr_url": str},
 )
 def file_uploader_to_gcp(
-    context: dg.AssetExecutionContext, gcs: GCSResource
+        context: dg.AssetExecutionContext, gcs: GCSResource
 ) -> dg.MaterializeResult:
     # Apparently this client doesn't need a `with` (IDisposable `using`)
     gcs_client = gcs.get_client()
@@ -112,7 +112,7 @@ pjm_table_schemas = {
     # deps=[file_uploader_to_gcp], # comment out to debug faster
 )
 def gcp_file_processor(
-    context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
+        context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
 ) -> dg.MaterializeResult:
     log = context.log
 
@@ -162,7 +162,7 @@ def gcp_file_processor(
                 bg_client.query("select 1")
                 print(f"Merge new PjmFtrScheduleFile: {blob_name}")
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
-                ".csv"
+                    ".csv"
             ):
                 log.info(f"Downloading PjmFtrModelUpdateFile: {blob_name}")
                 blob.download_to_filename(blob_name)
