@@ -5,3 +5,4 @@ https:/
 downloads/
 dist/
 .venv
+__pycache__/
