@@ -170,8 +170,6 @@ def gcp_file_processor(
                 PjmFtrModelUpdateFile(blob_name)
                 print(f"Merge new PjmFtrModelUpdateFile: {blob_name}")
 
-            break  # let's just test 1
-
     return dg.MaterializeResult()
 
 
