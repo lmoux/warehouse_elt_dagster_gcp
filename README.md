@@ -107,6 +107,18 @@ drop
 external table if exists `pjm_dataset.ftr_auction_calendar_events_from_files`;
 create
 external table `pjm_dataset.ftr_auction_calendar_events_from_files`
+ (
+  version INTEGER,
+  market_name STRING,
+  product STRING,
+  period STRING,
+  auction_round string,
+  bidding_opening datetime,
+  bidding_closing datetime,
+  results_posted datetime,
+  contract_start date,
+  contract_end date
+ )
  OPTIONS
  (
   format = 'CSV',
