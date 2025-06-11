@@ -88,7 +88,7 @@ pjm_table_schemas = {
         bigqueryLib.SchemaField("contract_start", "DATE", mode="REQUIRED"),
         bigqueryLib.SchemaField("contract_end", "DATE", mode="REQUIRED"),
     ],
-    "ftr_model_bus_changes": [
+    "ftr_model_node_changes": [
         bigqueryLib.SchemaField("version", "DATE", mode="REQUIRED"),
         bigqueryLib.SchemaField("from_id", "INTEGER", mode="REQUIRED"),
         bigqueryLib.SchemaField("from_txt_zone", "STRING", mode="REQUIRED"),
