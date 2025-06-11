@@ -28,7 +28,7 @@ big_query_dataset_id = "electricity-dw01.pjm_dataset"
     config_schema={"ftr_url": str},
 )
 def file_uploader_to_gcp(
-        context: dg.AssetExecutionContext, gcs: GCSResource
+    context: dg.AssetExecutionContext, gcs: GCSResource
 ) -> dg.MaterializeResult:
     # Apparently this client doesn't need a `with` (IDisposable `using`)
     gcs_client = gcs.get_client()
@@ -112,12 +112,14 @@ pjm_table_schemas = {
     # deps=[file_uploader_to_gcp], # comment out to debug faster
 )
 def gcp_file_processor(
-        context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
+    context: dg.AssetExecutionContext, gcs: GCSResource, bigquery: BigQueryResource
 ) -> dg.MaterializeResult:
     log = context.log
 
     gcs_client = gcs.get_client()
     bucket, blobs = retrieve_bucket_and_blobs(gcs_client, "dw01_bucket")
+
+    processed_files = []
 
     # question: can I just send the name of the new files (ie uploaded_files from file_uploader_to_gcp) directly to this?
     #       otherwise, I probably need more artifacts than those prescribed to keep track of what I had
@@ -161,16 +163,25 @@ def gcp_file_processor(
                 # merge into the auction_schedule table
                 bg_client.query("select 1")
                 print(f"Merge new PjmFtrScheduleFile: {blob_name}")
+                processed_files.append(blob_name)
             elif blob_name.startswith("ftr-model-update") and blob_name.endswith(
-                    ".csv"
+                ".csv"
             ):
                 log.info(f"Downloading PjmFtrModelUpdateFile: {blob_name}")
                 blob.download_to_filename(blob_name)
                 log.info(f"Attempt at parsing PjmFtrModelUpdateFile: {blob_name}")
                 PjmFtrModelUpdateFile(blob_name)
                 print(f"Merge new PjmFtrModelUpdateFile: {blob_name}")
+                processed_files.append(blob_name)
 
-    return dg.MaterializeResult()
+    return dg.MaterializeResult(
+        metadata={
+            "row_count": len(processed_files),
+            "preview": dg.MetadataValue.md(
+                pd.DataFrame(processed_files, columns=["Processed files"]).to_markdown()
+            ),
+        }
+    )
 
 
 defs = dg.Definitions(
