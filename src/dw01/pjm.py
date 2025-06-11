@@ -205,8 +205,14 @@ class PjmFtrModelUpdateFile:
             self.version = datetime.strptime(prospect_date, "%B %d, %Y").date()
             f.readline()
             third_line = f.readline()
-            assert re.match("^Buses Changed.*", third_line, re.IGNORECASE) is not None
-        self.changes = pd.read_csv(
+            assert (
+                re.match(
+                    "^((Bus?ses)|(Aggregates)) Changed.*", third_line, re.IGNORECASE
+                )
+                is not None
+            )
+            # we need to even account for typos...
+        df = pd.read_csv(
             filename,
             skiprows=5,
             names=[
@@ -224,8 +230,14 @@ class PjmFtrModelUpdateFile:
                 "to_name",
             ],
         )
-        self.changes.dropna(subset=["to_id"], inplace=True)
-        self.changes.insert(0, "version", self.version)
+        df.dropna(subset=["to_id"], inplace=True)
+        # df.drop(df[~df.to_id.str.isnumeric()].index) #this breaks in some cases
+        df.drop(
+            df[~df["to_id"].map(lambda x: x.__str__()).str.isnumeric()].index,
+            inplace=True,
+        )
+        df.insert(0, "version", self.version)
+        self.changes = df
 
 
 def url_matches_csv_model_change(link):
