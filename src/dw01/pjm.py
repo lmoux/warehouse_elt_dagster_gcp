@@ -305,6 +305,7 @@ def get_urls_all_ftr(
     with open(base_pjm_ftr_html, "r") as file:
         for next_download in get_urls_all_model_update_files(file, base_url):
             sought_downloads.append(next_download)
+        file.seek(0)
         for next_download in get_urls_all_schedule_files(file, base_url):
             sought_downloads.append(next_download)
     return sought_downloads
