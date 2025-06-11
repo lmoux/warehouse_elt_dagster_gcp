@@ -26,6 +26,20 @@ some specific tech pairings.
 * Create a bucket(Cloud storage) in multi region, just keep the default options
 * Create a dataset (BigQuery) in multi region, just keep the default options
 
+We'll use the bucket in two ways:
+
+* to upload raw files into the root `/`
+* to upload cleaned and converted versions to the `/cleaned/` folder
+* files in `/` not in `/cleaned/` would imply a need to reprocess them
+* files in `/cleaned/` would imply a skip opportunity
+
+We'll use BigQuery twofold
+
+* to hold data natively and to help in the transformation process
+    * this is akin to staging tables in more traditional ETLs
+    * in this case, those artifacts will be external tables consuming bucketed, already cleaned files
+* to build reports and query the data
+
 #### Dagster
 
 * No need Dagster resources or asset checks, just 2 assets, 1 job and 1 sensor.
