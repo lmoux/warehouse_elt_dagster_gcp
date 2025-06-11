@@ -67,3 +67,50 @@ uv run dg dev
 
 I haven't been able to configure Dagster CLI (dg tool)'s import paths
 correctly such that, currently, the `dg launch --assets gcp_file_processor` fails.
+
+This assumes the existence of two external tables on BigQuery, defined thusly:
+
+* `pjm_dataset.ftr_model_node_changes_from_files`
+
+```sql
+drop
+external table if exists `pjm_dataset.ftr_model_node_changes_from_files`;
+create
+external table `pjm_dataset.ftr_model_node_changes_from_files`
+(
+  version DATE,
+  from_id INT64,
+  from_txt_zone STRING,
+  from_substation STRING,
+  from_voltage STRING,
+  from_equipment STRING,
+  from_name STRING,
+  to_id INT64,
+  to_txt_zone STRING,
+  to_substation STRING,
+  to_voltage STRING,
+  to_equipment STRING,
+  to_name STRING
+)
+ OPTIONS
+ (
+  format = 'CSV',
+  uris = ['gs://dw01_bucket/cleaned/ftr-model-update-*.csv'],
+  skip_leading_rows = 1
+ );
+```
+
+* `pjm_dataset.ftr_auction_calendar_events_from_files`
+
+```sql
+drop
+external table if exists `pjm_dataset.ftr_auction_calendar_events_from_files`;
+create
+external table `pjm_dataset.ftr_auction_calendar_events_from_files`
+ OPTIONS
+ (
+  format = 'CSV',
+  uris = ['gs://dw01_bucket/cleaned/*-ftr-arr-market-schedule.csv'],
+  skip_leading_rows = 1
+ );
+```
