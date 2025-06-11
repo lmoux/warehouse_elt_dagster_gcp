@@ -6,3 +6,6 @@ downloads/
 dist/
 .venv
 __pycache__/
+*.csv
+*.xls
+*.xlsx
