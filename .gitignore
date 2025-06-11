@@ -4,3 +4,4 @@ https:/
 .DS_Store
 downloads/
 dist/
+.venv
