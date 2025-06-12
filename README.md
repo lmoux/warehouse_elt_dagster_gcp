@@ -140,3 +140,11 @@ external table `pjm_dataset.ftr_auction_calendar_events_from_files`
   skip_leading_rows = 1
  );
 ```
+
+# To Do:
+
+- refactor the gcp_file_processor such that
+    - [ ] split the file identification part into
+      a [sensor](https://docs.dagster.io/etl-pipeline-tutorial/create-a-sensor-asset)
+    - [ ] split the processing part to become event driven (i.e., receive the new file to process as argument)
+- possibly run the file_uploader_to_gcp asset on a schedule
